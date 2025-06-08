@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Użytkownicy</title>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+    <h1>Lista użytkowników</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Imię</th>
+                <th>Nazwisko</th>
+                <th>Stopień / Tytuł</th>
+                <th>Akcja</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in uzytkownicy %}
+            <tr>
+                <td>{{ u.id_uzytkownika }}</td>
+                <td>{{ u.imie }}</td>
+                <td>{{ u.nazwisko }}</td>
+                <td>{{ u.stopien_naukowy }}</td>
+                <td>
+                    <form action="{{ url_for('main.usun_uzytkownika', id=u.id_uzytkownika) }}" method="POST" style="display:inline;">
+                        <button type="submit" onclick="return confirm('Na pewno usunąć?')">Usuń</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Dodaj nowego użytkownika</h2>
+    <form method="POST" action="{{ url_for('main.uzytkownicy') }}">
+        <label for="imie">Imię:</label>
+        <input type="text" name="imie" required>
+        <br>
+        <label for="nazwisko">Nazwisko:</label>
+        <input type="text" name="nazwisko" required>
+        <br>
+        <label for="stopien">Stopień / tytuł:</label>
+        <input type="text" name="stopien_naukowy" id="stopien_naukowy">
+        <br>
+        <button type="submit">Dodaj</button>
+    </form>
+
+    <br>
+    <a href="/">Powrót do strony głównej</a>
+</body>
+</html>

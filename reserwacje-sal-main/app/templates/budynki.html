@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Lista budynków</title>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+
+    <h1>Lista budynków</h1>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nazwa</th>
+                <th>Adres</th>
+                <th>Akcje</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for budynek in budynki %}
+            <tr>
+                <td>{{ budynek.id_budynku }}</td>
+                <td>{{ budynek.nazwa_budynku }}</td>
+                <td>{{ budynek.adres }}</td>
+                <td>
+                    <form action="{{ url_for('main.usun_budynek', id=budynek.id_budynku) }}" method="POST">
+                        <button type="submit" onclick="return confirm('Na pewno usunąć?')">Usuń</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Dodaj nowy budynek</h2>
+    <form method="POST" action="{{ url_for('main.budynki') }}">
+        <label for="nazwa">Nazwa:</label>
+        <input type="text" name="nazwa" id="nazwa" required>
+        <br>
+        <label for="adres">Adres:</label>
+        <input type="text" name="adres" id="adres" required>
+        <br>
+        <button type="submit">Dodaj</button>
+    </form>
+
+    <a href="/">Powrót do strony głównej</a>
+</body>
+</html>

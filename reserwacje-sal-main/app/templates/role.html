@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Role w systemie</title>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+    <h1>Lista ról</h1>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nazwa roli</th>
+                <th>Akcja </th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in role %}
+            <tr>
+                <td>{{ r.id_roli }}</td>
+                <td>{{ r.nazwa_roli }}</td>
+                <td>
+                    <form action="{{ url_for('main.usun_role', id=r.id_roli) }}" method="POST" style="display:inline;">
+                        <button type="submit" onclick="return confirm('Na pewno usunąć?')">Usuń</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Dodaj nową rolę</h2>
+    <form method="POST" action="{{ url_for('main.role') }}">
+        <label for="nazwa_roli">Nazwa roli:</label>
+        <input type="text" name="nazwa_roli" id="nazwa_roli" required>
+        <button type="submit">Dodaj</button>
+    </form>
+
+    <br>
+    <a href="/">Powrót do strony głównej</a>
+</body>
+</html>
