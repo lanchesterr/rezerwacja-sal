@@ -1,8 +1,8 @@
-# routes.py w blueprintcie main
 from flask import render_template, request, redirect, url_for
 from . import main
 from app import db
-from app.models import Budynek, Sala, Role, Przedmiot, Uzytkownik
+from app.models import Budynek, Sala, Role, Przedmiot, Uzytkownik, Rezerwacja, GrupaCykliczna
+from datetime import datetime, timedelta
 
 @main.route('/', methods=['GET', 'POST'])
 def index():
@@ -139,3 +139,102 @@ def usun_uzytkownika(id):
     db.session.delete(uzytkownik)
     db.session.commit()
     return redirect(url_for('main.uzytkownicy'))
+
+@main.route('/rezerwacje', methods=['GET', 'POST'])
+def rezerwacje():
+    if request.method == 'POST':
+        try:
+            nowa = Rezerwacja(
+                id_sali=int(request.form['id_sali']),
+                id_przedmiotu=int(request.form['id_przedmiotu']),
+                id_uzytkownika=int(request.form['id_uzytkownika']),
+                status=request.form['status'],
+                czas_od=datetime.fromisoformat(request.form['czas_od']),
+                czas_do=datetime.fromisoformat(request.form['czas_do'])
+            )
+            db.session.add(nowa)
+            db.session.commit()
+            return redirect(url_for('main.rezerwacje'))
+        except Exception as e:
+            db.session.rollback()
+            return f"Błąd: {e}", 400
+
+    rezerwacje = Rezerwacja.query.all()
+    sale = Sala.query.all()
+    przedmioty = Przedmiot.query.all()
+    uzytkownicy = Uzytkownik.query.all()
+    return render_template('rezerwacje.html', rezerwacje=rezerwacje, sale=sale, przedmioty=przedmioty, uzytkownicy=uzytkownicy)
+
+@main.route('/rezerwacje/usun/<int:id>', methods=['POST'])
+def usun_rezerwacje(id):
+    r = Rezerwacja.query.get_or_404(id)
+    db.session.delete(r)
+    db.session.commit()
+    return redirect(url_for('main.rezerwacje'))
+
+@main.route('/grupy_cykliczne', methods=['GET', 'POST'])
+def grupy_cykliczne():
+    if request.method == 'POST':
+        try:
+            data_start = datetime.strptime(request.form['data_start'], '%Y-%m-%d').date()
+            data_koniec = datetime.strptime(request.form['data_koniec'], '%Y-%m-%d').date()
+            dzien_tygodnia = int(request.form['dzien_tygodnia'])
+            godzina_od = request.form['godzina_od']
+            godzina_do = request.form['godzina_do']
+            opis = request.form['opis']
+
+            grupa = GrupaCykliczna(
+                data_start=data_start,
+                data_koniec=data_koniec,
+                dzien_tygodnia=dzien_tygodnia,
+                godzina_od=godzina_od,
+                godzina_do=godzina_do,
+                opis=opis
+            )
+            db.session.add(grupa)
+            db.session.flush()
+
+            id_sali = int(request.form['id_sali'])
+            id_przedmiotu = int(request.form['id_przedmiotu'])
+            id_uzytkownika = int(request.form['id_uzytkownika'])
+            status = request.form['status']
+
+            czas_od_time = datetime.strptime(godzina_od, '%H:%M').time()
+            czas_do_time = datetime.strptime(godzina_do, '%H:%M').time()
+
+            aktualna_data = data_start
+            while aktualna_data <= data_koniec:
+                if aktualna_data.weekday() == dzien_tygodnia:
+                    czas_od = datetime.combine(aktualna_data, czas_od_time)
+                    czas_do = datetime.combine(aktualna_data, czas_do_time)
+                    db.session.add(Rezerwacja(
+                        id_sali=id_sali,
+                        id_przedmiotu=id_przedmiotu,
+                        id_uzytkownika=id_uzytkownika,
+                        status=status,
+                        czas_od=czas_od,
+                        czas_do=czas_do,
+                        id_grupy_cyklicznej=grupa.id_grupy_cyklicznej
+                    ))
+                aktualna_data += timedelta(days=1)
+
+            db.session.commit()
+            return redirect(url_for('main.grupy_cykliczne'))
+
+        except Exception as e:
+            db.session.rollback()
+            return f"Błąd: {e}", 400
+
+    grupy = GrupaCykliczna.query.all()
+    sale = Sala.query.all()
+    przedmioty = Przedmiot.query.all()
+    uzytkownicy = Uzytkownik.query.all()
+    return render_template('grupy_cykliczne.html', grupy=grupy, sale=sale, przedmioty=przedmioty, uzytkownicy=uzytkownicy)
+
+@main.route('/grupy_cykliczne/usun/<int:id>', methods=['POST'])
+def usun_grupe_cykliczna(id):
+    grupa = GrupaCykliczna.query.get_or_404(id)
+    Rezerwacja.query.filter_by(id_grupy_cyklicznej=grupa.id_grupy_cyklicznej).delete()
+    db.session.delete(grupa)
+    db.session.commit()
+    return redirect(url_for('main.grupy_cykliczne'))
