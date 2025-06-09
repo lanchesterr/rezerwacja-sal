@@ -58,3 +58,37 @@ class Uzytkownik(db.Model):
 
     def __repr__(self):
         return f"<Uzytkownik {self.imie} {self.nazwisko}>"
+
+
+class Rezerwacja(db.Model):
+    __tablename__ = 'REZERWACJE'
+
+    id_rezerwacji = db.Column("ID_REZERWACJI", db.Integer, primary_key=True)
+    id_sali = db.Column("ID_SALI", db.Integer, db.ForeignKey('SALE.ID_SALI'), nullable=False)
+    id_uzytkownika = db.Column("ID_UZYTKOWNIKA", db.Integer, db.ForeignKey('UZYTKOWNICY.ID_UZYTKOWNIKA'), nullable=False)
+    id_przedmiotu = db.Column("ID_PRZEDMIOTU", db.Integer, db.ForeignKey('PRZEDMIOTY.ID_PRZEDMIOTU'), nullable=False)
+    status = db.Column("STATUS", db.String(50), nullable=False)
+    czas_od = db.Column("CZAS_OD", db.DateTime, nullable=False)
+    czas_do = db.Column("CZAS_DO", db.DateTime, nullable=False)
+    id_grupy_cyklicznej = db.Column("ID_GRUPY_CYKLICZNEJ", db.Integer, db.ForeignKey('GRUPACYKLICZNA.ID_GRUPY_CYKLICZNEJ'))
+
+    sala = db.relationship('Sala')
+    przedmiot = db.relationship('Przedmiot')
+    uzytkownik = db.relationship('Uzytkownik')
+
+    def __repr__(self):
+        return f"<Rezerwacja {self.id_rezerwacji} - {self.status}>"
+
+class GrupaCykliczna(db.Model):
+    __tablename__ = 'GRUPACYKLICZNA'
+
+    id_grupy_cyklicznej = db.Column('ID_GRUPY_CYKLICZNEJ',db.Integer, primary_key=True)
+    data_start = db.Column(db.Date, nullable=False)
+    data_koniec = db.Column(db.Date, nullable=False)
+    dzien_tygodnia = db.Column(db.Integer, nullable=False) 
+    godzina_od = db.Column('GODZINA_OD', db.String(5), nullable=False)
+    godzina_do = db.Column('GODZINA_DO', db.String(5), nullable=False)
+    opis = db.Column(db.String(255))
+
+    rezerwacje = db.relationship('Rezerwacja', backref='grupa_cykliczna', cascade="all, delete")
+
