@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Grupy Cykliczne</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <h1>Grupy Cykliczne</h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Opis</th>
+        <th>Data od</th>
+        <th>Data do</th>
+        <th>Dzień tygodnia</th>
+        <th>Godzina od</th>
+        <th>Godzina do</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for g in grupy %}
+      <tr>
+        <td>{{ g.id_grupy_cyklicznej }}</td>
+        <td>{{ g.opis or '—' }}</td>
+        <td>{{ g.data_start }}</td>
+        <td>{{ g.data_koniec }}</td>
+        <td>
+          {% set dni = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Niedz'] %}
+          {{ dni[g.dzien_tygodnia] }}
+        </td>
+        <td>{{ g.godzina_od }}</td>
+        <td>{{ g.godzina_do }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Dodaj nową grupę cykliczną</h2>
+  <form method="POST" action="{{ url_for('main.grupy_cykliczne') }}">
+    <label for="opis">Opis:</label><br>
+    <input type="text" name="opis"><br>
+
+    <label for="data_start">Data od:</label><br>
+    <input type="date" name="data_start" required><br>
+
+    <label for="data_koniec">Data do:</label><br>
+    <input type="date" name="data_koniec" required><br>
+
+    <label for="dzien_tygodnia">Dzień tygodnia (0 = pon):</label><br>
+    <input type="number" name="dzien_tygodnia" min="0" max="6" required><br>
+
+    <label for="godzina_od">Godzina od:</label><br>
+    <input type="time" name="godzina_od" required><br>
+
+    <label for="godzina_do">Godzina do:</label><br>
+    <input type="time" name="godzina_do" required><br>
+
+    <label for="id_sali">Sala:</label><br>
+    <select name="id_sali" required>
+      {% for sala in sale %}
+        <option value="{{ sala.id_sali }}">{{ sala.nazwa_sali }}</option>
+      {% endfor %}
+    </select><br>
+
+    <label for="id_przedmiotu">Przedmiot:</label><br>
+    <select name="id_przedmiotu" required>
+      {% for p in przedmioty %}
+        <option value="{{ p.id_przedmiotu }}">{{ p.nazwa_przedmiotu }}</option>
+      {% endfor %}
+    </select><br>
+
+    <label for="id_uzytkownika">Prowadzący:</label><br>
+    <select name="id_uzytkownika" required>
+      {% for u in uzytkownicy %}
+        <option value="{{ u.id_uzytkownika }}">{{ u.imie }} {{ u.nazwisko }}</option>
+      {% endfor %}
+    </select><br>
+
+    <label for="status">Status:</label><br>
+    <input type="text" name="status" required><br>
+
+    <button type="submit">Dodaj</button>
+  </form>
+
+  <br>
+  <a href="/">Powrót do strony głównej</a>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Rezerwacje</title>
+    <link rel="stylesheet"  href="static/style.css">
+</head>
+<body>
+    <h1>Lista pojedynczych rezerwacji</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Sala</th>
+                <th>Przedmiot</th>
+                <th>Użytkownik</th>
+                <th>Status</th>
+                <th>Od</th>
+                <th>Do</th>
+                <th>Akcja</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in rezerwacje %}
+            <tr>
+                <td>{{ r.id_rezerwacji }}</td>
+                <td>{{ r.sala.nazwa_sali }}</td>
+                <td>{{ r.przedmiot.nazwa_przedmiotu }}</td>
+                <td>{{ r.uzytkownik.imie }} {{ r.uzytkownik.nazwisko }}</td>
+                <td>{{ r.status }}</td>
+                <td>{{ r.czas_od }}</td>
+                <td>{{ r.czas_do }}</td>
+                <td>
+                    <form action="{{ url_for('main.usun_rezerwacje', id=r.id_rezerwacji) }}" method="POST">
+                        <button type="submit" onclick="return confirm('Usunąć rezerwację?')">Usuń</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Dodaj rezerwację</h2>
+    <form method="POST" action="{{ url_for('main.rezerwacje') }}">
+        <label for="Sala">Sala:</label>
+        <select name="id_sali" required>
+            {% for s in sale %}
+            <option value="{{ s.id_sali }}">{{ s.nazwa_sali }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="id_przedmiotu">Przedmiot:</label>
+        <select name="id_przedmiotu" required>
+            {% for p in przedmioty %}
+            <option value="{{ p.id_przedmiotu }}">{{ p.nazwa_przedmiotu }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="id_uzytkownika">Użytkownik:</label>
+        <select name="id_uzytkownika" required>
+            {% for u in uzytkownicy %}
+            <option value="{{ u.id_uzytkownika }}">{{ u.imie }} {{ u.nazwisko }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="status">Status:</label>
+        <input type="text" name="status" required>
+
+        <label for="czas_od">Czas od:</label>
+        <input type="datetime-local" name="czas_od" required>
+
+        <label for="czas_do">Czas do:</label>
+        <input type="datetime-local" name="czas_do" required>
+
+        <button type="submit">Dodaj</button>
+    </form>
+
+    <a href="/">Powrót do strony głównej</a>
+</body>
+</html>
