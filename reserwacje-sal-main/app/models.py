@@ -10,6 +10,7 @@ class Budynek(db.Model):
     def __repr__(self):
         return f"<Budynek {self.nazwa_budynku}>"
 
+
 class Sala(db.Model):
     __tablename__ = 'SALE'
 
@@ -24,8 +25,16 @@ class Sala(db.Model):
 
     def __repr__(self):
         return f"<Sala {self.nazwa_sali}>"
-    
-class Role(db.Model):
+
+# Tabela pośrednicząca dla relacji wiele-do-wielu
+role_uzytkownicy = db.Table(
+    'ROLE_UZYTKOWNICY',
+    db.Column('ID_UZYTKOWNIKA', db.Integer, db.ForeignKey('UZYTKOWNICY.ID_UZYTKOWNIKA'), primary_key=True),
+    db.Column('ID_ROLI', db.Integer, db.ForeignKey('ROLE.ID_ROLI'), primary_key=True),
+    db.Model.metadata
+)
+
+class Rola(db.Model):
     __tablename__ = 'ROLE'
 
     id_roli = db.Column("ID_ROLI", db.Integer, primary_key=True)
@@ -41,12 +50,12 @@ class Przedmiot(db.Model):
     id_przedmiotu = db.Column("ID_PRZEDMIOTU", db.Integer, primary_key=True)
     nazwa_przedmiotu = db.Column("NAZWA_PRZEDMIOTU", db.String(50), nullable=False)
     id_uzytkownika = db.Column("ID_UZYTKOWNIKA", db.Integer, db.ForeignKey('UZYTKOWNICY.ID_UZYTKOWNIKA'), nullable=False)
-
     uzytkownik = db.relationship('Uzytkownik', backref='przedmioty')
-
 
     def __repr__(self):
         return f"<Przedmiot {self.nazwa_przedmiotu}>"
+
+
 
 class Uzytkownik(db.Model):
     __tablename__ = 'UZYTKOWNICY'
@@ -55,6 +64,9 @@ class Uzytkownik(db.Model):
     imie = db.Column("IMIE", db.String(50), nullable=False)
     nazwisko = db.Column("NAZWISKO", db.String(50), nullable=False)
     stopien_naukowy = db.Column("STOPIEN_NAUKOWY", db.String(50), nullable=True)
+
+    # Relacja wiele-do-wielu z Rola
+    role = db.relationship("Rola", secondary="ROLE_UZYTKOWNICY", backref='uzytkownicy')
 
     def __repr__(self):
         return f"<Uzytkownik {self.imie} {self.nazwisko}>"
@@ -70,7 +82,7 @@ class Rezerwacja(db.Model):
     status = db.Column("STATUS", db.String(50), nullable=False)
     czas_od = db.Column("CZAS_OD", db.DateTime, nullable=False)
     czas_do = db.Column("CZAS_DO", db.DateTime, nullable=False)
-    id_grupy_cyklicznej = db.Column("ID_GRUPY_CYKLICZNEJ", db.Integer, db.ForeignKey('GRUPACYKLICZNA.ID_GRUPY_CYKLICZNEJ'))
+    id_grupy_cyklicznej = db.Column("ID_GRUPY_CYKLICZNEJ", db.Integer, db.ForeignKey('GRUPYCYKLICZNE.ID_GRUPY_CYKLICZNEJ'))
 
     sala = db.relationship('Sala')
     przedmiot = db.relationship('Przedmiot')
@@ -79,8 +91,9 @@ class Rezerwacja(db.Model):
     def __repr__(self):
         return f"<Rezerwacja {self.id_rezerwacji} - {self.status}>"
 
+
 class GrupaCykliczna(db.Model):
-    __tablename__ = 'GRUPACYKLICZNA'
+    __tablename__ = 'GRUPYCYKLICZNE'
 
     id_grupy_cyklicznej = db.Column('ID_GRUPY_CYKLICZNEJ',db.Integer, primary_key=True)
     data_start = db.Column(db.Date, nullable=False)
@@ -90,5 +103,5 @@ class GrupaCykliczna(db.Model):
     godzina_do = db.Column('GODZINA_DO', db.String(5), nullable=False)
     opis = db.Column(db.String(255))
 
-    rezerwacje = db.relationship('Rezerwacja', backref='grupa_cykliczna', cascade="all, delete")
+    # rezerwacje = db.relationship('Rezerwacja', backref='GRUPYCYKLICZNE', cascade="all, delete")
 
