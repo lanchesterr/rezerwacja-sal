@@ -9,6 +9,15 @@
 
     <h1>Lista budynków</h1>
 
+<form method="GET" action="{{ url_for('main.budynki') }}">
+    <input type="text" name="szukaj" placeholder="Wpisz nazwę budynku..." value="{{ request.args.get('szukaj', '') }}">
+    <button type="submit">Szukaj</button>
+</form>
+
+  {% if err %}
+        <p style="color: red;">{{ err }}</p>
+    {% endif %}
+
     <table border="1">
         <thead>
             <tr>
@@ -20,31 +29,47 @@
         </thead>
         <tbody>
             {% for budynek in budynki %}
-            <tr>
-                <td>{{ budynek.id_budynku }}</td>
-                <td>{{ budynek.nazwa_budynku }}</td>
-                <td>{{ budynek.adres }}</td>
-                <td>
-                    <form action="{{ url_for('main.usun_budynek', id=budynek.id_budynku) }}" method="POST">
-                        <button type="submit" onclick="return confirm('Na pewno usunąć?')">Usuń</button>
+                {% if request.args.get('edit') == budynek.id_budynku|string %}
+                <tr>
+                    <form method="POST" action="{{ url_for('main.edytuj_budynek', id=budynek.id_budynku) }}">
+                        <td>{{ budynek.id_budynku }}</td>
+                        <td><input type="text" name="nazwa" value="{{ budynek.nazwa_budynku }}" required></td>
+                        <td><input type="text" name="adres" value="{{ budynek.adres }}" required></td>
+                        <td>
+                            <button type="submit">Zapisz</button>
+                            <a href="{{ url_for('main.budynki') }}">Anuluj</a>
+                        </td>
                     </form>
-                </td>
-            </tr>
+                </tr>
+                {% else %}
+                <tr>
+                    <td>{{ budynek.id_budynku }}</td>
+                    <td>{{ budynek.nazwa_budynku }}</td>
+                    <td>{{ budynek.adres }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('main.usun_budynek', id=budynek.id_budynku) }}" style="display:inline;">
+                            <button type="submit">Usuń</button>
+                        </form>
+                        <a href="{{ url_for('main.budynki', edit=budynek.id_budynku) }}">Edytuj</a>
+                    </td>
+                </tr>
+                {% endif %}
             {% endfor %}
         </tbody>
     </table>
 
     <h2>Dodaj nowy budynek</h2>
     <form method="POST" action="{{ url_for('main.budynki') }}">
-        <label for="nazwa">Nazwa:</label>
-        <input type="text" name="nazwa" id="nazwa" required>
-        <br>
-        <label for="adres">Adres:</label>
-        <input type="text" name="adres" id="adres" required>
-        <br>
+        <label for="nazwa">Nazwa budynku:</label><br>
+        <input type="text" name="nazwa" required><br>
+
+        <label for="adres">Adres:</label><br>
+        <input type="text" name="adres" required><br>
+
         <button type="submit">Dodaj</button>
     </form>
 
+    <br>
     <a href="/">Powrót do strony głównej</a>
 </body>
 </html>
