@@ -8,62 +8,98 @@
 <body>
     <h1>Lista sal</h1>
 
-    <table border="1">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nazwa</th>
-                <th>Rodzaj</th>
-                <th>Liczba Miejsc</th>
-                <th>Wyposażenie</th>
-                <th>Budynek</th>
-                <th>Akcje</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for sala in sale %}
-            <tr>
-                <td>{{ sala.id_sali }}</td>
-                <td>{{ sala.nazwa_sali }}</td>
-                <td>{{ sala.rodzaj_sali }}</td>
-                <td>{{ sala.liczba_miejsc }}</td>
-                <td>{{ sala.wyposazenie }}</td>
-                <td>{{ sala.budynek.nazwa_budynku }}</td>
-                <td>
-                    <form action="{{ url_for('main.usun_sale', id=sala.id_sali) }}" method="POST" style="display:inline;">
-                        <button type="submit" onclick="return confirm('Na pewno usunąć?')">Usuń</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <h2>Dodaj nową salę</h2>
-    <form method="POST" action="{{ url_for('main.sale') }}">
-        <label for="nazwa">Nazwa:</label>
-        <input type="text" name="nazwa" id="nazwa" required>
-        <br>
-        <label for="rodzaj">Rodzaj:</label>
-        <input type="text" name="rodzaj" id="rodzaj" required>
-        <br>
-        <label for="liczba_miejsc">Liczba miejsc:</label>
-        <input type="text" name="liczba_miejsc" id="liczba_miejsc" required>
-        <br>
-        <label for="wyposażenie">Wyposażenie:</label>
-        <input type="text" name="wyposażenie" id="wyposażenie">
-        <br>
-        <label for="nazwa_budynku">Budynek:</label>
-        <input type="text" name="nazwa_budynku" id="nazwa_budynku" required>
-        <button type="submit">Dodaj</button>
+    <form method="GET" action="{{ url_for('main.sale') }}">
+    <input type="text" name="szukaj" placeholder="Wpisz nazwę sali..." value="{{ request.args.get('szukaj', '') }}">
+    <button type="submit">Szukaj</button>
     </form>
 
-    {% if err %}
-    <script>
-        alert("{{ err|e }}");
-    </script>
-    {% endif %}
 
-    <a href="/">Powrót do strony głównej</a>
+  {% if err %}
+    <p style="color: red;">{{ err }}</p>
+  {% endif %}
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nazwa</th>
+        <th>Rodzaj</th>
+        <th>Liczba miejsc</th>
+        <th>Wyposażenie</th>
+        <th>Budynek</th>
+        <th>Akcje</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for sala in sale %}
+        {% if request.args.get('edit') == sala.id_sali|string %}
+        <tr>
+          <form method="POST" action="{{ url_for('main.edytuj_sale', id=sala.id_sali) }}">
+            <td>{{ sala.id_sali }}</td>
+            <td><input type="text" name="nazwa" value="{{ sala.nazwa_sali }}" required></td>
+            <td><input type="text" name="rodzaj" value="{{ sala.rodzaj_sali }}" required></td>
+            <td><input type="number" name="liczba_miejsc" value="{{ sala.liczba_miejsc }}" required></td>
+            <td><input type="text" name="wyposażenie" value="{{ sala.wyposazenie }}" required></td>
+            <td>
+              <select name="nazwa_budynku" required>
+                {% for b in budynki %}
+                  <option value="{{ b.nazwa_budynku }}" {% if b.id_budynku == sala.id_budynku %}selected{% endif %}>
+                    {{ b.nazwa_budynku }}
+                  </option>
+                {% endfor %}
+              </select>
+            </td>
+            <td>
+              <button type="submit">Zapisz</button>
+              <a href="{{ url_for('main.sale') }}">Anuluj</a>
+            </td>
+          </form>
+        </tr>
+        {% else %}
+        <tr>
+          <td>{{ sala.id_sali }}</td>
+          <td>{{ sala.nazwa_sali }}</td>
+          <td>{{ sala.rodzaj_sali }}</td>
+          <td>{{ sala.liczba_miejsc }}</td>
+          <td>{{ sala.wyposazenie }}</td>
+          <td>{{ sala.budynek.nazwa_budynku }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('main.usun_sale', id=sala.id_sali) }}" style="display:inline;">
+              <button type="submit">Usuń</button>
+            </form>
+            <a href="{{ url_for('main.sale', edit=sala.id_sali) }}">Edytuj</a>
+          </td>
+        </tr>
+        {% endif %}
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Dodaj nową salę</h2>
+  <form method="POST" action="{{ url_for('main.sale') }}">
+    <label>Nazwa:</label><br>
+    <input type="text" name="nazwa" required><br>
+
+    <label>Rodzaj:</label><br>
+    <input type="text" name="rodzaj" required><br>
+
+    <label>Liczba miejsc:</label><br>
+    <input type="number" name="liczba_miejsc" required><br>
+
+    <label>Wyposażenie:</label><br>
+    <input type="text" name="wyposażenie" required><br>
+
+    <label>Nazwa budynku:</label><br>
+    <select name="nazwa_budynku" required>
+      {% for b in budynki %}
+        <option value="{{ b.nazwa_budynku }}">{{ b.nazwa_budynku }}</option>
+      {% endfor %}
+    </select><br><br>
+
+    <button type="submit">Dodaj</button>
+  </form>
+
+  <br>
+  <a href="/">Powrót do strony głównej</a>
 </body>
 </html>
