@@ -43,35 +43,35 @@
 
     <h2>Dodaj rezerwację</h2>
     <form method="POST" action="{{ url_for('main.rezerwacje') }}">
-        <label for="Sala">Sala:</label>
-        <select name="id_sali" required>
+        <label for="id_sali">Sala:</label>
+        <select id="id_sali" name="id_sali" required>
             {% for s in sale %}
             <option value="{{ s.id_sali }}">{{ s.nazwa_sali }}</option>
             {% endfor %}
         </select>
 
         <label for="id_przedmiotu">Przedmiot:</label>
-        <select name="id_przedmiotu" required>
+        <select id="id_przedmiotu" name="id_przedmiotu" required>
             {% for p in przedmioty %}
             <option value="{{ p.id_przedmiotu }}">{{ p.nazwa_przedmiotu }}</option>
             {% endfor %}
         </select>
 
         <label for="id_uzytkownika">Użytkownik:</label>
-        <select name="id_uzytkownika" required>
+        <select id="id_uzytkownika" name="id_uzytkownika" required>
             {% for u in uzytkownicy %}
             <option value="{{ u.id_uzytkownika }}">{{ u.imie }} {{ u.nazwisko }}</option>
             {% endfor %}
         </select>
 
         <label for="status">Status:</label>
-        <input type="text" name="status" required>
+        <input id="status" type="text" name="status" required>
 
         <label for="czas_od">Czas od:</label>
-        <input type="datetime-local" name="czas_od" required>
+        <input id="czas_od" type="datetime-local" name="czas_od" required>
 
         <label for="czas_do">Czas do:</label>
-        <input type="datetime-local" name="czas_do" required>
+        <input id="czas_do" type="datetime-local" name="czas_do" required>
 
         <button type="submit">Dodaj</button>
     </form>
