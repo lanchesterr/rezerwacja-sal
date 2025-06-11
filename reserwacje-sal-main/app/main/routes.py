@@ -1,5 +1,6 @@
-from flask import render_template, request, redirect, url_for
+from flask import render_template, request, redirect, url_for, flash
 from sqlalchemy import select
+import time
 
 from . import main
 from app import db
@@ -166,16 +167,32 @@ def rezerwacje():
                 czas_od=datetime.fromisoformat(request.form['czas_od']),
                 czas_do=datetime.fromisoformat(request.form['czas_do'])
             )
-            #TODO: Zablokowanie możliwości rezerwacji w tym samym terminie
-            #      oraz w bezsensownych terminach, np. wstecz
-            kolizja = Rezerwacja.query.filter(Rezerwacja.id_sali == nowa.id_sali,
+
+            # Obsługa kolizji rezerwacji
+            kolizja_sali = Rezerwacja.query.filter(Rezerwacja.id_sali == nowa.id_sali,
                                               Rezerwacja.czas_od < nowa.czas_do,
                                               Rezerwacja.czas_do > nowa.czas_od).first()
-            if kolizja:
+            if kolizja_sali:
+                flash("Wybrany termin koliduje z istniejącą rezerwacją!", "error")
+                return redirect(url_for('main.rezerwacje'))  # przekierowanie z komunikatem
+
+            # Obsługa próby rezerwacji "wstecz" np. od 11 do 10
+            if nowa.czas_od > nowa.czas_do:
+                flash("Nieprawidłowy zakres czasu rezerwacji!", "error")
                 return redirect(url_for('main.rezerwacje'))
+
+            # Obsługa próby dodania rezerwacji w czasie której użytkownik ma już zajęcia gdzieś indziej
+            kolizja_uzytkownika = Rezerwacja.query.filter(Rezerwacja.id_uzytkownika == nowa.id_uzytkownika,
+                                                          Rezerwacja.czas_od < nowa.czas_do,
+                                                          Rezerwacja.czas_do > nowa.czas_od).first()
+            if kolizja_uzytkownika:
+                flash("Wybrany użytkownik prowadzi już zajęcia w tym terminie!", "error")
+                return redirect(url_for('main.rezerwacje'))
+                
             db.session.add(nowa)
             db.session.commit()
             return redirect(url_for('main.rezerwacje'))
+
         except Exception as e:
             db.session.rollback()
             return f"Błąd: {e}", 400
@@ -184,6 +201,7 @@ def rezerwacje():
     sale = Sala.query.all()
     przedmioty = Przedmiot.query.all()
     uzytkownicy = Uzytkownik.query.all()
+
     return render_template('rezerwacje.html', rezerwacje=rezerwacje, sale=sale, przedmioty=przedmioty, uzytkownicy=uzytkownicy)
 
 @main.route('/rezerwacje/usun/<int:id>', methods=['POST'])
