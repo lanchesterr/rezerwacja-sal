@@ -1,7 +1,9 @@
 from flask import render_template, request, redirect, url_for
+from sqlalchemy import select
+
 from . import main
 from app import db
-from app.models import Budynek, Sala, Role, Przedmiot, Uzytkownik, Rezerwacja, GrupaCykliczna
+from app.models import Budynek, Sala, Rola, Przedmiot, Uzytkownik, Rezerwacja, GrupaCykliczna
 from datetime import datetime, timedelta
 
 @main.route('/', methods=['GET', 'POST'])
@@ -69,17 +71,17 @@ def usun_sale(id):
 def role():
     if request.method == 'POST':
         nazwa_roli = request.form['nazwa_roli']
-        nowa_rola = Role(nazwa_roli=nazwa_roli)
+        nowa_rola = Rola(nazwa_roli=nazwa_roli)
         db.session.add(nowa_rola)
         db.session.commit()
         return redirect(url_for('main.role'))
 
-    wszystkie_role = Role.query.all()
+    wszystkie_role = Rola.query.all()
     return render_template('role.html', role=wszystkie_role)
 
 @main.route('/role/usun/<int:id>', methods=['POST'])
 def usun_role(id):
-    rola = Role.query.get_or_404(id)
+    rola = Rola.query.get_or_404(id)
     db.session.delete(rola)
     db.session.commit()
     return redirect(url_for('main.role'))
@@ -126,12 +128,24 @@ def uzytkownicy():
         stopien_naukowy = request.form.get('stopien_naukowy')
 
         nowy_uzytkownik = Uzytkownik(imie=imie, nazwisko=nazwisko, stopien_naukowy=stopien_naukowy)
+
         db.session.add(nowy_uzytkownik)
+        db.session.flush()
+
+        # Obsługa ról
+        rola_ids = request.form.getlist('id_roli')
+        for rola_id in rola_ids:
+            rola = Rola.query.get(rola_id)
+            if rola:
+                nowy_uzytkownik.role.append(rola)
+
         db.session.commit()
         return redirect(url_for('main.uzytkownicy'))
 
     wszyscy = Uzytkownik.query.all()
-    return render_template('uzytkownicy.html', uzytkownicy=wszyscy)
+    wszystkie_role = Rola.query.all()
+    print("Wszystkie role:", wszystkie_role)  # zobacz w konsoli
+    return render_template('uzytkownicy.html', uzytkownicy=wszyscy, role=wszystkie_role)
 
 @main.route('/uzytkownicy/usun/<int:id>', methods=['POST'])
 def usun_uzytkownika(id):
@@ -152,6 +166,13 @@ def rezerwacje():
                 czas_od=datetime.fromisoformat(request.form['czas_od']),
                 czas_do=datetime.fromisoformat(request.form['czas_do'])
             )
+            #TODO: Zablokowanie możliwości rezerwacji w tym samym terminie
+            #      oraz w bezsensownych terminach, np. wstecz
+            kolizja = Rezerwacja.query.filter(Rezerwacja.id_sali == nowa.id_sali,
+                                              Rezerwacja.czas_od < nowa.czas_do,
+                                              Rezerwacja.czas_do > nowa.czas_od).first()
+            if kolizja:
+                return redirect(url_for('main.rezerwacje'))
             db.session.add(nowa)
             db.session.commit()
             return redirect(url_for('main.rezerwacje'))
