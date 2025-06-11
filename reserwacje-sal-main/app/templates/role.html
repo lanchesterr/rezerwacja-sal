@@ -8,37 +8,56 @@
 <body>
     <h1>Lista ról</h1>
 
-    <table border="1">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nazwa roli</th>
-                <th>Akcja </th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for r in role %}
-            <tr>
-                <td>{{ r.id_roli }}</td>
-                <td>{{ r.nazwa_roli }}</td>
-                <td>
-                    <form action="{{ url_for('main.usun_role', id=r.id_roli) }}" method="POST" style="display:inline;">
-                        <button type="submit" onclick="return confirm('Na pewno usunąć?')">Usuń</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<form method="GET" action="{{ url_for('main.role') }}">
+    <input type="text" name="szukaj" placeholder="Wpisz nazwę roli..." value="{{ request.args.get('szukaj', '') }}">
+    <button type="submit">Szukaj</button>
+</form>
 
-    <h2>Dodaj nową rolę</h2>
-    <form method="POST" action="{{ url_for('main.role') }}">
-        <label for="nazwa_roli">Nazwa roli:</label>
-        <input type="text" name="nazwa_roli" id="nazwa_roli" required>
-        <button type="submit">Dodaj</button>
-    </form>
+  <table border="1">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nazwa roli</th>
+        <th>Akcje</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in role %}
+        {% if request.args.get('edit') == r.id_roli|string %}
+        <tr>
+          <form method="POST" action="{{ url_for('main.edytuj_role', id=r.id_roli) }}">
+            <td>{{ r.id_roli }}</td>
+            <td><input type="text" name="nazwa_roli" value="{{ r.nazwa_roli }}" required></td>
+            <td>
+              <button type="submit">Zapisz</button>
+              <a href="{{ url_for('main.role') }}">Anuluj</a>
+            </td>
+          </form>
+        </tr>
+        {% else %}
+        <tr>
+          <td>{{ r.id_roli }}</td>
+          <td>{{ r.nazwa_roli }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('main.usun_role', id=r.id_roli) }}" style="display:inline;">
+              <button type="submit">Usuń</button>
+            </form>
+            <a href="{{ url_for('main.role', edit=r.id_roli) }}">Edytuj</a>
+          </td>
+        </tr>
+        {% endif %}
+      {% endfor %}
+    </tbody>
+  </table>
 
-    <br>
-    <a href="/">Powrót do strony głównej</a>
+  <h2>Dodaj nową rolę</h2>
+  <form method="POST" action="{{ url_for('main.role') }}">
+    <label for="nazwa_roli">Nazwa roli:</label><br>
+    <input type="text" name="nazwa_roli" required><br>
+    <button type="submit">Dodaj</button>
+  </form>
+
+  <br>
+  <a href="/">Powrót do strony głównej</a>
 </body>
 </html>
