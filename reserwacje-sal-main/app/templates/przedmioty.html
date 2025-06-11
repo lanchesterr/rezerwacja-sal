@@ -7,53 +7,81 @@
 </head>
 <body>
     <h1>Lista przedmiotów</h1>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nazwa przedmiotu</th>
-                <th>Użytkownik</th>
-                <th>Akcja</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for p in przedmioty %}
-            <tr>
-                <td>{{ p.id_przedmiotu }}</td>
-                <td>{{ p.nazwa_przedmiotu }}</td>
-                <td>{{ p.uzytkownik.imie }} {{ p.uzytkownik.nazwisko }}</td>
-                <td>
-                    <form action="{{ url_for('main.usun_przedmiot', id=p.id_przedmiotu) }}" method="POST" style="display:inline;">
-                        <button type="submit" onclick="return confirm('Na pewno usunąć?')">Usuń</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
 
-    <h2>Dodaj nowy przedmiot</h2>
-    <form method="POST" action="{{ url_for('main.przedmioty') }}">
-        <label for="nazwa_przedmiotu">Nazwa przedmiotu:</label>
-        <input type="text" name="nazwa_przedmiotu" required><br>
-
-        <label for="id_uzytkownika">Prowadzący:</label>
-        <select name="id_uzytkownika" required>
-            <option value="">-- Wybierz prowadzącego --</option>
-            {% for u in uzytkownicy %}
-                <option value="{{ u.id_uzytkownika }}">{{ u.imie }} {{ u.nazwisko }}</option>
-            {% endfor %}
-        </select>
-
-        <button type="submit">Dodaj</button>
+    <form method="GET" action="{{ url_for('main.przedmioty') }}">
+    <input type="text" name="szukaj" placeholder="Wpisz nazwę przedmiotu..." value="{{ request.args.get('szukaj', '') }}">
+    <button type="submit">Szukaj</button>
     </form>
 
 
-    <br>
-    <a href="/">Powrót do strony głównej</a>
+  {% if err %}
+    <p style="color: red;">{{ err }}</p>
+  {% endif %}
 
-    {% if err %}
-        <script>alert("{{ err|e}}");</script>
-    {% endif %}
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nazwa przedmiotu</th>
+        <th>Prowadzący</th>
+        <th>Akcje</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in przedmioty %}
+        {% if request.args.get('edit') == p.id_przedmiotu|string %}
+        <tr>
+          <form method="POST" action="{{ url_for('main.edytuj_przedmiot', id=p.id_przedmiotu) }}">
+            <td>{{ p.id_przedmiotu }}</td>
+            <td><input type="text" name="nazwa_przedmiotu" value="{{ p.nazwa_przedmiotu }}" required></td>
+            <td>
+              <select name="id_uzytkownika" required>
+                {% for u in uzytkownicy %}
+                  <option value="{{ u.id_uzytkownika }}" {% if u.id_uzytkownika == p.id_uzytkownika %}selected{% endif %}>
+                    {{ u.imie }} {{ u.nazwisko }}
+                  </option>
+                {% endfor %}
+              </select>
+            </td>
+            <td>
+              <button type="submit">Zapisz</button>
+              <a href="{{ url_for('main.przedmioty') }}">Anuluj</a>
+            </td>
+          </form>
+        </tr>
+        {% else %}
+        <tr>
+          <td>{{ p.id_przedmiotu }}</td>
+          <td>{{ p.nazwa_przedmiotu }}</td>
+          <td>{{ p.uzytkownik.imie }} {{ p.uzytkownik.nazwisko }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('main.usun_przedmiot', id=p.id_przedmiotu) }}" style="display:inline;">
+              <button type="submit">Usuń</button>
+            </form>
+            <a href="{{ url_for('main.przedmioty', edit=p.id_przedmiotu) }}">Edytuj</a>
+          </td>
+        </tr>
+        {% endif %}
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Dodaj nowy przedmiot</h2>
+  <form method="POST" action="{{ url_for('main.przedmioty') }}">
+    <label for="nazwa_przedmiotu">Nazwa przedmiotu:</label><br>
+    <input type="text" name="nazwa_przedmiotu" required><br>
+
+    <label for="id_uzytkownika">Prowadzący:</label><br>
+    <select name="id_uzytkownika" required>
+      {% for u in uzytkownicy %}
+        <option value="{{ u.id_uzytkownika }}">{{ u.imie }} {{ u.nazwisko }}</option>
+      {% endfor %}
+    </select><br>
+
+    <button type="submit">Dodaj</button>
+  </form>
+
+  <br>
+  <a href="/">Powrót do strony głównej</a>
 </body>
 </html>
