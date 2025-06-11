@@ -21,7 +21,13 @@ def budynki():
         db.session.commit()
         return redirect(url_for('main.budynki'))
 
-    wszystkie_budynki = Budynek.query.all()
+    # obsługa wyszukiwania
+    szukana_nazwa = request.args.get('szukaj')
+    if szukana_nazwa:
+        wszystkie_budynki = Budynek.query.filter(Budynek.nazwa_budynku.ilike(f"%{szukana_nazwa}%")).all()
+    else:
+        wszystkie_budynki = Budynek.query.all()
+
     return render_template('budynki.html', budynki=wszystkie_budynki)
 
 @main.route('/budynki/usun/<int:id>', methods=['POST'])
@@ -30,6 +36,15 @@ def usun_budynek(id):
     db.session.delete(budynek)
     db.session.commit()
     return redirect(url_for('main.budynki'))
+
+@main.route('/budynki/edytuj/<int:id>', methods=['POST'])
+def edytuj_budynek(id):
+    budynek = Budynek.query.get_or_404(id)
+    budynek.nazwa_budynku = request.form['nazwa']
+    budynek.adres = request.form['adres']
+    db.session.commit()
+    return redirect(url_for('main.budynki'))
+
 
 @main.route('/sale', methods=['GET', 'POST'])
 def sale():
@@ -58,7 +73,13 @@ def sale():
         db.session.commit()
         return redirect(url_for('main.sale'))
 
-    wszystkie_sale = Sala.query.all()
+    # filtruj jeśli podano nazwę w GET
+    szukana_nazwa = request.args.get('szukaj')
+    if szukana_nazwa:
+        wszystkie_sale = Sala.query.filter(Sala.nazwa_sali.ilike(f"%{szukana_nazwa}%")).all()
+    else:
+        wszystkie_sale = Sala.query.all()
+
     return render_template('sale.html', sale=wszystkie_sale, err=err)
 
 @main.route('/sale/usun/<int:id>', methods=['POST'])
@@ -67,6 +88,22 @@ def usun_sale(id):
     db.session.delete(sala)
     db.session.commit()
     return redirect(url_for('main.sale'))
+
+@main.route('/sale/edytuj/<int:id>', methods=['POST'])
+def edytuj_sale(id):
+    sala = Sala.query.get_or_404(id)
+    sala.nazwa_sali = request.form['nazwa']
+    sala.rodzaj_sali = request.form['rodzaj']
+    sala.liczba_miejsc = request.form['liczba_miejsc']
+    sala.wyposazenie = request.form['wyposażenie']
+    budynek = Budynek.query.filter_by(nazwa_budynku=request.form['nazwa_budynku']).first()
+    if not budynek:
+        return redirect(url_for('main.sale', err='Budynek nie istnieje'))
+
+    sala.id_budynku = budynek.id_budynku
+    db.session.commit()
+    return redirect(url_for('main.sale'))
+
 
 @main.route('/role', methods=['GET', 'POST'])
 def role():
@@ -77,8 +114,24 @@ def role():
         db.session.commit()
         return redirect(url_for('main.role'))
 
-    wszystkie_role = Rola.query.all()
+    # wyszukiwanie po nazwie roli
+    szukana_nazwa = request.args.get('szukaj')
+    if szukana_nazwa:
+        wszystkie_role = Rola.query.filter(Rola.nazwa_roli.ilike(f"%{szukana_nazwa}%")).all()
+    else:
+        wszystkie_role = Rola.query.all()
+
     return render_template('role.html', role=wszystkie_role)
+
+@main.route('/role/edytuj/<int:id>', methods=['POST'])
+def edytuj_role(id):
+    rola = Rola.query.get_or_404(id)
+    nowa_nazwa = request.form['nazwa_roli']
+    if nowa_nazwa.strip():
+        rola.nazwa_roli = nowa_nazwa.strip()
+        db.session.commit()
+    return redirect(url_for('main.role'))
+
 
 @main.route('/role/usun/<int:id>', methods=['POST'])
 def usun_role(id):
@@ -110,9 +163,15 @@ def przedmioty():
                 db.session.rollback()
                 err = f"Wystąpił błąd: {str(e)}"
 
-    przedmioty = Przedmiot.query.all()
+    szukana_nazwa = request.args.get('szukaj')
+    if szukana_nazwa:
+        przedmioty = Przedmiot.query.filter(Przedmiot.nazwa_przedmiotu.ilike(f"%{szukana_nazwa}%")).all()
+    else:
+        przedmioty = Przedmiot.query.all()
+
     uzytkownicy = Uzytkownik.query.all()
     return render_template('przedmioty.html', przedmioty=przedmioty, uzytkownicy=uzytkownicy, err=err)
+
 
 @main.route('/przedmioty/usun/<int:id>', methods=['POST'])
 def usun_przedmiot(id):
@@ -120,6 +179,9 @@ def usun_przedmiot(id):
     db.session.delete(przedmiot)
     db.session.commit()
     return redirect(url_for('main.przedmioty'))
+
+
+
 
 @main.route('/uzytkownicy', methods=['GET', 'POST'])
 def uzytkownicy():
