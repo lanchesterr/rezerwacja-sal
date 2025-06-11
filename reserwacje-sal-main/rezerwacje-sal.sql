@@ -25,164 +25,209 @@ CREATE TABLE GrupyCykliczne
      data_start          DATE  NOT NULL , 
      data_koniec         DATE  NOT NULL , 
      dzien_tygodnia      INTEGER  NOT NULL , 
-     godzina_od          TIMESTAMP WITH TIME ZONE  NOT NULL , 
-     godzina_do          TIMESTAMP WITH TIME ZONE  NOT NULL , 
-     opis                VARCHAR2 (200) 
-    ) 
+     godzina_od          VARCHAR2(5) ,
+     godzina_do          VARCHAR(5),
+     opis                VARCHAR2 (200)
+    )
 ;
 
 
 
-CREATE TABLE Przedmioty 
-    ( 
-     id_przedmiotu    INTEGER  GENERATED ALWAYS AS IDENTITY PRIMARY KEY, 
-     nazwa_przedmiotu VARCHAR2 (30)  NOT NULL , 
-     id_użytkownika   INTEGER  NOT NULL 
-    ) 
+CREATE TABLE Przedmioty
+    (
+     id_przedmiotu    INTEGER  GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+     nazwa_przedmiotu VARCHAR2 (30)  NOT NULL ,
+     id_uzytkownika   INTEGER  NOT NULL
+    )
 ;
 
 
 
-CREATE TABLE Rezerwacje 
-    ( 
-     id_rezerwacji       INTEGER  GENERATED ALWAYS AS IDENTITY PRIMARY KEY , 
-     id_sali             INTEGER  NOT NULL , 
-     id_użytkownika      INTEGER  NOT NULL , 
-     id_przedmiotu       INTEGER  NOT NULL , 
-     status              VARCHAR2 (30)  NOT NULL , 
-     czas_od             TIMESTAMP WITH TIME ZONE  NOT NULL , 
-     czas_do             TIMESTAMP WITH TIME ZONE  NOT NULL , 
-     id_grupy_cyklicznej INTEGER 
-    ) 
+CREATE TABLE Rezerwacje
+    (
+     id_rezerwacji       INTEGER  GENERATED ALWAYS AS IDENTITY PRIMARY KEY ,
+     id_sali             INTEGER  NOT NULL ,
+     id_uzytkownika      INTEGER  NOT NULL ,
+     id_przedmiotu       INTEGER  NOT NULL ,
+     status              VARCHAR2 (30)  NOT NULL ,
+     czas_od             TIMESTAMP WITH TIME ZONE  NOT NULL ,
+     czas_do             TIMESTAMP WITH TIME ZONE  NOT NULL ,
+     id_grupy_cyklicznej INTEGER
+    )
 ;
 
 
 
-CREATE TABLE Role 
-    ( 
-     id_roli    INTEGER  GENERATED ALWAYS AS IDENTITY PRIMARY KEY , 
-     nazwa_roli VARCHAR2 (50)  NOT NULL 
-    ) 
+CREATE TABLE "ROLE"
+    (
+     id_roli    INTEGER  GENERATED ALWAYS AS IDENTITY PRIMARY KEY ,
+     nazwa_roli VARCHAR2 (50)  NOT NULL
+    )
 ;
 
 
-CREATE TABLE Role_Użytkownicy 
-    ( 
-     id_roli        INTEGER  GENERATED ALWAYS AS IDENTITY PRIMARY KEY , 
-     id_użytkownika INTEGER  NOT NULL 
-    ) 
-;
-
-
-
-CREATE TABLE Sale 
-    ( 
-     id_sali       INTEGER  GENERATED ALWAYS AS IDENTITY PRIMARY KEY , 
-     nazwa_sali    VARCHAR2 (30)  NOT NULL , 
-     rodzaj_sali   VARCHAR2 (30)  NOT NULL , 
-     liczba_miejsc INTEGER , 
-     wyposażenie   VARCHAR2 (200) , 
-     id_budynku    INTEGER  NOT NULL 
-    ) 
+CREATE TABLE Role_Uzytkownicy
+    (
+     id_roli        INTEGER  GENERATED ALWAYS AS IDENTITY PRIMARY KEY ,
+     id_uzytkownika INTEGER  NOT NULL
+    )
 ;
 
 
 
-CREATE TABLE Użytkownicy 
-    ( 
-     id_użytkownika  INTEGER  GENERATED ALWAYS AS IDENTITY PRIMARY KEY, 
-     imie            VARCHAR2 (50)  NOT NULL , 
-     nazwisko        VARCHAR2 (50)  NOT NULL , 
-     stopien_naukowy VARCHAR2 (50) 
-    ) 
+CREATE TABLE Sale
+    (
+     id_sali       INTEGER  GENERATED ALWAYS AS IDENTITY PRIMARY KEY ,
+     nazwa_sali    VARCHAR2 (30)  NOT NULL ,
+     rodzaj_sali   VARCHAR2 (30)  NOT NULL ,
+     liczba_miejsc INTEGER ,
+     wyposażenie   VARCHAR2 (200) ,
+     id_budynku    INTEGER  NOT NULL
+    )
 ;
 
 
 
-ALTER TABLE Przedmioty 
-    ADD CONSTRAINT Przedmiot_Użytkownik_FK FOREIGN KEY 
-    ( 
-     id_użytkownika
-    ) 
-    REFERENCES Użytkownicy 
-    ( 
-     id_użytkownika
-    ) 
+CREATE TABLE Uzytkownicy
+    (
+     id_uzytkownika  INTEGER  GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+     imie            VARCHAR2 (50)  NOT NULL ,
+     nazwisko        VARCHAR2 (50)  NOT NULL ,
+     stopien_naukowy VARCHAR2 (50)
+    )
 ;
 
-ALTER TABLE Rezerwacje 
-    ADD CONSTRAINT Rezerwacja_GrupaCykliczna_FK FOREIGN KEY 
-    ( 
+
+
+ALTER TABLE Przedmioty
+    ADD CONSTRAINT Przedmiot_Uzytkownik_FK FOREIGN KEY
+    (
+     id_uzytkownika
+    )
+    REFERENCES Uzytkownicy
+    (
+     id_uzytkownika
+    )
+;
+
+ALTER TABLE Rezerwacje
+    ADD CONSTRAINT Rezerwacja_GrupaCykliczna_FK FOREIGN KEY
+    (
      id_grupy_cyklicznej
-    ) 
-    REFERENCES GrupyCykliczne 
-    ( 
+    )
+    REFERENCES GrupyCykliczne
+    (
      id_grupy_cyklicznej
-    ) 
+    )
 ;
 
-ALTER TABLE Rezerwacje 
-    ADD CONSTRAINT Rezerwacja_Przedmiot_FK FOREIGN KEY 
-    ( 
+ALTER TABLE Rezerwacje
+    ADD CONSTRAINT Rezerwacja_Przedmiot_FK FOREIGN KEY
+    (
      id_przedmiotu
-    ) 
-    REFERENCES Przedmioty 
-    ( 
+    )
+    REFERENCES Przedmioty
+    (
      id_przedmiotu
-    ) 
+    )
 ;
 
-ALTER TABLE Rezerwacje 
-    ADD CONSTRAINT Rezerwacja_Sala_FK FOREIGN KEY 
-    ( 
+ALTER TABLE Rezerwacje
+    ADD CONSTRAINT Rezerwacja_Sala_FK FOREIGN KEY
+    (
      id_sali
-    ) 
-    REFERENCES Sale 
-    ( 
+    )
+    REFERENCES Sale
+    (
      id_sali
-    ) 
+    )
 ;
 
-ALTER TABLE Rezerwacje 
-    ADD CONSTRAINT Rezerwacja_Użytkownik_FK FOREIGN KEY 
-    ( 
-     id_użytkownika
-    ) 
-    REFERENCES Użytkownicy 
-    ( 
-     id_użytkownika
-    ) 
+ALTER TABLE Rezerwacje
+    ADD CONSTRAINT Rezerwacja_Uzytkownik_FK FOREIGN KEY
+    (
+     id_uzytkownika
+    )
+    REFERENCES Uzytkownicy
+    (
+     id_uzytkownika
+    )
 ;
 
-ALTER TABLE Role_Użytkownicy 
-    ADD CONSTRAINT Rola_Użytkownik_Rola_FK FOREIGN KEY 
-    ( 
+ALTER TABLE Role_Uzytkownicy
+    ADD CONSTRAINT Rola_Uzytkownik_Rola_FK FOREIGN KEY
+    (
      id_roli
-    ) 
-    REFERENCES Role 
-    ( 
+    )
+    REFERENCES Role
+    (
      id_roli
-    ) 
+    )
 ;
 
-ALTER TABLE Role_Użytkownicy 
-    ADD CONSTRAINT Rola_Użytkownik_Użytkownik_FK FOREIGN KEY 
-    ( 
-     id_użytkownika
-    ) 
-    REFERENCES Użytkownicy 
-    ( 
-     id_użytkownika
-    ) 
+ALTER TABLE Role_Uzytkownicy
+    ADD CONSTRAINT Rola_Uzytkownik_Uzytkownik_FK FOREIGN KEY
+    (
+     id_uzytkownika
+    )
+    REFERENCES Uzytkownicy
+    (
+     id_uzytkownika
+    )
 ;
 
-ALTER TABLE Sale 
-    ADD CONSTRAINT Sala_Budynek_FK FOREIGN KEY 
-    ( 
+ALTER TABLE Sale
+    ADD CONSTRAINT Sala_Budynek_FK FOREIGN KEY
+    (
      id_budynku
-    ) 
-    REFERENCES Budynki 
-    ( 
+    )
+    REFERENCES Budynki
+    (
      id_budynku
-    ) 
+    )
 ;
+
+
+
+-- Oracle SQL Developer Data Modeler Summary Report:
+--
+-- CREATE TABLE                             8
+-- CREATE INDEX                             0
+-- ALTER TABLE                             16
+-- CREATE VIEW                              0
+-- ALTER VIEW                               0
+-- CREATE PACKAGE                           0
+-- CREATE PACKAGE BODY                      0
+-- CREATE PROCEDURE                         0
+-- CREATE FUNCTION                          0
+-- CREATE TRIGGER                           0
+-- ALTER TRIGGER                            0
+-- CREATE COLLECTION TYPE                   0
+-- CREATE STRUCTURED TYPE                   0
+-- CREATE STRUCTURED TYPE BODY              0
+-- CREATE CLUSTER                           0
+-- CREATE CONTEXT                           0
+-- CREATE DATABASE                          0
+-- CREATE DIMENSION                         0
+-- CREATE DIRECTORY                         0
+-- CREATE DISK GROUP                        0
+-- CREATE ROLE                              0
+-- CREATE ROLLBACK SEGMENT                  0
+-- CREATE SEQUENCE                          0
+-- CREATE MATERIALIZED VIEW                 0
+-- CREATE MATERIALIZED VIEW LOG             0
+-- CREATE SYNONYM                           0
+-- CREATE TABLESPACE                        0
+-- CREATE USER                              0
+--
+-- DROP TABLESPACE                          0
+-- DROP DATABASE                            0
+--
+-- REDACTION POLICY                         0
+--
+-- ORDS DROP SCHEMA                         0
+-- ORDS ENABLE SCHEMA                       0
+-- ORDS ENABLE OBJECT                       0
+--
+-- ERRORS                                   0
+-- WARNINGS                                 0
