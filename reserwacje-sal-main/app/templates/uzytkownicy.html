@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <title>Użytkownicy</title>
     <link rel="stylesheet" href="static/style.css">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"  rel="stylesheet">
 </head>
 <body>
     <h1>Lista użytkowników</h1>
@@ -16,6 +18,7 @@
                 <th>Nazwisko</th>
                 <th>Stopień / Tytuł</th>
                 <th>Role</th>
+                <th>Przedmioty</th>
                 <th>Akcja</th>
             </tr>
         </thead>
@@ -36,6 +39,11 @@
                 {% endif %}
                 </td>
                 <td>
+                    <button class="btn btn-info btn-sm" onclick="pobierzPrzedmioty({{ u.id_uzytkownika }})">
+                    Wyświetl przedmioty
+                    </button>
+                </td>
+                <td>
                     <form action="{{ url_for('main.usun_uzytkownika', id=u.id_uzytkownika) }}" method="POST" style="display:inline;">
                         <button type="submit" onclick="return confirm('Na pewno usunąć?')">Usuń</button>
                     </form>
@@ -44,7 +52,22 @@
             {% endfor %}
         </tbody>
     </table>
-
+    <!-- Modal -->
+<div class="modal fade" id="przedmiotyModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalLabel">Przedmioty prowadzonego użytkownika</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ul id="lista-przedmiotow" class="list-group">
+          <!-- Tutaj zostaną dodane przedmioty -->
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
     <h2>Dodaj nowego użytkownika</h2>
     <form method="POST" action="{{ url_for('main.uzytkownicy') }}">
             <label for="imie">Imię:</label>
@@ -69,6 +92,40 @@
 
     <br>
     <a href="/">Powrót do strony głównej</a>
-
+<!-- Bootstrap JS (Bundle z Popper) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+<script>
+function pobierzPrzedmioty(uzytkownikId) {
+    fetch(`/przedmioty/uzytkownik/${uzytkownikId}`)
+        .then(response => response.json())
+        .then(data => {
+            const lista = document.getElementById('lista-przedmiotow');
+            lista.innerHTML = ''; // Czyścimy poprzednią zawartość
+
+            if (data.length === 0) {
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                li.textContent = 'Brak przedmiotów.';
+                lista.appendChild(li);
+                return;
+            }
+
+            data.forEach(przedmiot => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                li.textContent = przedmiot.nazwa;
+                lista.appendChild(li);
+            });
+
+            // Pokaż modal
+            const modal = new bootstrap.Modal(document.getElementById('przedmiotyModal'));
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Błąd ładowania danych:', error);
+            alert('Nie udało się pobrać listy przedmiotów.');
+        });
+}
+</script>
 </html>

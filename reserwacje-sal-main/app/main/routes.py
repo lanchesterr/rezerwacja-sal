@@ -180,6 +180,7 @@ def usun_przedmiot(id):
     db.session.commit()
     return redirect(url_for('main.przedmioty'))
 
+@main.route('/przedmio')
 
 
 
@@ -216,6 +217,7 @@ def usun_uzytkownika(id):
     db.session.delete(uzytkownik)
     db.session.commit()
     return redirect(url_for('main.uzytkownicy'))
+
 
 @main.route('/rezerwacje', methods=['GET', 'POST'])
 def rezerwacje():
