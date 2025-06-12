@@ -61,7 +61,7 @@ class Przedmiot(db.Model):
 
 
     # Relacja wiele-do-wielu z Uzytkownikiem
-    prowadzacy = db.relationship("Uzytkownik", secondary=uzytkownicy_przedmioty, backref="lista_przedmiotow")
+    # prowadzacy = db.relationship("Uzytkownik", secondary=uzytkownicy_przedmioty, backpopulates="przedmioty")
     def __repr__(self):
         return f"<Przedmiot {self.nazwa_przedmiotu}>"
 
@@ -77,10 +77,22 @@ class Uzytkownik(db.Model):
 
     # Relacja wiele-do-wielu z Rola
     role = db.relationship("Rola", secondary="ROLE_UZYTKOWNICY", backref='uzytkownicy')
-
+    # Relacja wiele-do-wielu z Przedmiot
+    # przedmioty = db.relationship("Przedmiot", secondary=uzytkownicy_przedmioty, backpopulates="prowadzacy")
     def __repr__(self):
         return f"<Uzytkownik {self.imie} {self.nazwisko}>"
 
+# Teraz możesz dodać relację poza klasami:
+Uzytkownik.przedmioty = db.relationship(
+    "Przedmiot",
+    secondary=uzytkownicy_przedmioty,
+    back_populates="prowadzacy"
+)
+Przedmiot.prowadzacy = db.relationship(
+    "Uzytkownik",
+    secondary=uzytkownicy_przedmioty,
+    back_populates="przedmioty"
+)
 
 class Rezerwacja(db.Model):
     __tablename__ = 'REZERWACJE'
@@ -113,5 +125,5 @@ class GrupaCykliczna(db.Model):
     godzina_do = db.Column('GODZINA_DO', db.String(5), nullable=False)
     opis = db.Column(db.String(255))
 
-    # rezerwacje = db.relationship('Rezerwacja', backref='GRUPYCYKLICZNE', cascade="all, delete")
+    rezerwacje = db.relationship('Rezerwacja', backref='GRUPYCYKLICZNE', cascade="all, delete")
 

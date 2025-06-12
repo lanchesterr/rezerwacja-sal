@@ -18,6 +18,7 @@
         <th>Dzień tygodnia</th>
         <th>Godzina od</th>
         <th>Godzina do</th>
+        <th>Akcje</th>
       </tr>
     </thead>
     <tbody>
@@ -33,6 +34,11 @@
         </td>
         <td>{{ g.godzina_od }}</td>
         <td>{{ g.godzina_do }}</td>
+        <td>
+            <form method="POST" action="{{ url_for('main.usun_grupe_cykliczna', id=g.id_grupy_cyklicznej) }}" style="display:inline;">
+              <button type="submit">Usuń</button>
+            </form>
+          </td>
       </tr>
       {% endfor %}
     </tbody>

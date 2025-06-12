@@ -28,42 +28,53 @@
       </tr>
     </thead>
     <tbody>
-      {% for p in przedmioty %}
-        {% if request.args.get('edit') == p.id_przedmiotu|string %}
-        <tr>
-          <form method="POST" action="{{ url_for('main.edytuj_przedmiot', id=p.id_przedmiotu) }}">
-            <td>{{ p.id_przedmiotu }}</td>
-            <td><input type="text" name="nazwa_przedmiotu" value="{{ p.nazwa_przedmiotu }}" required></td>
-            <td>
-              <select name="id_uzytkownika" required>
-                {% for u in uzytkownicy %}
-                  <option value="{{ u.id_uzytkownika }}" {% if u.id_uzytkownika == p.id_uzytkownika %}selected{% endif %}>
-                    {{ u.imie }} {{ u.nazwisko }}
-                  </option>
-                {% endfor %}
-              </select>
-            </td>
-            <td>
-              <button type="submit">Zapisz</button>
-              <a href="{{ url_for('main.przedmioty') }}">Anuluj</a>
-            </td>
-          </form>
-        </tr>
+  {% for p in przedmioty %}
+    {% if request.args.get('edit') == p.id_przedmiotu|string %}
+    <tr>
+      <form method="POST" action="{{ url_for('main.edytuj_przedmiot', id=p.id_przedmiotu) }}">
+        <td>{{ p.id_przedmiotu }}</td>
+        <td><input type="text" name="nazwa_przedmiotu" value="{{ p.nazwa_przedmiotu }}" required></td>
+        <td>
+          <!-- Wybór wielu prowadzących -->
+          <select name="prowadzacy_ids" multiple style="height: 100px;">
+            {% for u in uzytkownicy %}
+              <option value="{{ u.id_uzytkownika }}" {% if u in p.prowadzacy %}selected{% endif %}>
+                {{ u.imie }} {{ u.nazwisko }}
+              </option>
+            {% endfor %}
+          </select>
+        </td>
+        <td>
+          <button type="submit">Zapisz</button>
+          <a href="{{ url_for('main.przedmioty') }}">Anuluj</a>
+        </td>
+      </form>
+    </tr>
+    {% else %}
+    <tr>
+      <td>{{ p.id_przedmiotu }}</td>
+      <td>{{ p.nazwa_przedmiotu }}</td>
+      <td>
+        {% if p.prowadzacy %}
+          <ul style="margin: 0; padding: 0; list-style: none;">
+            {% for u in p.prowadzacy %}
+              <li>{{ u.imie }} {{ u.nazwisko }}</li>
+            {% endfor %}
+          </ul>
         {% else %}
-        <tr>
-          <td>{{ p.id_przedmiotu }}</td>
-          <td>{{ p.nazwa_przedmiotu }}</td>
-          <td>{{ p.uzytkownik.imie }} {{ p.uzytkownik.nazwisko }}</td>
-          <td>
-            <form method="POST" action="{{ url_for('main.usun_przedmiot', id=p.id_przedmiotu) }}" style="display:inline;">
-              <button type="submit">Usuń</button>
-            </form>
-            <a href="{{ url_for('main.przedmioty', edit=p.id_przedmiotu) }}">Edytuj</a>
-          </td>
-        </tr>
+          Brak prowadzących
         {% endif %}
-      {% endfor %}
-    </tbody>
+      </td>
+      <td>
+        <form method="POST" action="{{ url_for('main.usun_przedmiot', id=p.id_przedmiotu) }}" style="display:inline;">
+          <button type="submit">Usuń</button>
+        </form>
+        <a href="{{ url_for('main.przedmioty', edit=p.id_przedmiotu) }}">Edytuj</a>
+      </td>
+    </tr>
+    {% endif %}
+  {% endfor %}
+</tbody>
   </table>
 
   <h2>Dodaj nowy przedmiot</h2>
@@ -71,12 +82,7 @@
     <label for="nazwa_przedmiotu">Nazwa przedmiotu:</label><br>
     <input type="text" name="nazwa_przedmiotu" required><br>
 
-    <label for="id_uzytkownika">Prowadzący:</label><br>
-    <select name="id_uzytkownika" required>
-      {% for u in uzytkownicy %}
-        <option value="{{ u.id_uzytkownika }}">{{ u.imie }} {{ u.nazwisko }}</option>
-      {% endfor %}
-    </select><br>
+
 
     <button type="submit">Dodaj</button>
   </form>

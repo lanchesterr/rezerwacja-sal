@@ -10,6 +10,10 @@
 </head>
 <body>
     <h1>Lista użytkowników</h1>
+    <form method="GET" action="{{ url_for('main.uzytkownicy') }}">
+    <input type="text" name="szukaj" placeholder="Wpisz nazwisko..." value="{{ request.args.get('szukaj', '') }}">
+    <button type="submit">Szukaj</button>
+    </form>
     <table border="1">
         <thead>
             <tr>
@@ -23,41 +27,80 @@
             </tr>
         </thead>
         <tbody>
-            {% for u in uzytkownicy %}
-            <tr>
-                <td>{{ u.id_uzytkownika }}</td>
-                <td>{{ u.imie }}</td>
-                <td>{{ u.nazwisko }}</td>
-                <td>{{ u.stopien_naukowy }}</td>
-                <td>
-                {% if u.role %}
-                  {% for r in u.role %}
-                    {{ r.nazwa_roli }}{% if not loop.last %}, {% endif %}
-                  {% endfor %}
-                {% else %}
-                  Brak ról
-                {% endif %}
-                </td>
-                <td>
-                    <button class="btn btn-info btn-sm" onclick="pobierzPrzedmioty({{ u.id_uzytkownika }})">
-                    Wyświetl przedmioty
-                    </button>
-                </td>
-                <td>
-                    <form action="{{ url_for('main.usun_uzytkownika', id=u.id_uzytkownika) }}" method="POST" style="display:inline;">
-                        <button type="submit" onclick="return confirm('Na pewno usunąć?')">Usuń</button>
-                    </form>
-                </td>
-            </tr>
+    {% for u in uzytkownicy %}
+      {% if request.args.get('edit') == u.id_uzytkownika|string %}
+      <tr>
+        <form method="POST" action="{{ url_for('main.edytuj_uzytkownika', id=u.id_uzytkownika) }}">
+          <td>{{ u.id_uzytkownika }}</td>
+          <td><input type="text" name="imie" value="{{ u.imie }}" required></td>
+          <td><input type="text" name="nazwisko" value="{{ u.nazwisko }}" required></td>
+          <td><input type="text" name="stopien_naukowy" value="{{ u.stopien_naukowy }}"></td>
+
+          <td>
+    <!-- Wybór wielu ról -->
+    <select name="role_ids" multiple size="3">
+        {% for r in role %}
+            <option value="{{ r.id_roli }}" {% if r in u.role %}selected{% endif %}>
+                {{ r.nazwa_roli }}
+            </option>
+        {% endfor %}
+    </select>
+</td>
+
+<td>
+    <!-- Wybór wielu przedmiotów -->
+    <select name="przedmioty_ids" multiple size="3">
+        {% for p in przedmioty %}
+            <option value="{{ p.id_przedmiotu }}" {% if p in u.przedmioty %}selected{% endif %}>
+                {{ p.nazwa_przedmiotu }}
+            </option>
+        {% endfor %}
+    </select>
+</td>
+          <td>
+            <!-- Przyciski Zapisz / Anuluj -->
+            <button type="submit">Zapisz</button>
+            <a href="{{ url_for('main.uzytkownicy') }}">Anuluj</a>
+          </td>
+        </form>
+      </tr>
+      {% else %}
+      <tr>
+        <td>{{ u.id_uzytkownika }}</td>
+        <td>{{ u.imie }}</td>
+        <td>{{ u.nazwisko }}</td>
+        <td>{{ u.stopien_naukowy }}</td>
+        <td>
+          {% if u.role %}
+            {% for r in u.role %}
+              {{ r.nazwa_roli }}{% if not loop.last %}, {% endif %}
             {% endfor %}
-        </tbody>
+          {% else %}
+            Brak ról
+          {% endif %}
+        </td>
+        <td>
+          <button class="btn btn-info btn-sm" onclick="pobierzPrzedmioty({{ u.id_uzytkownika }})">
+            Wyświetl przedmioty
+          </button>
+        </td>
+        <td>
+          <form method="POST" action="{{ url_for('main.usun_uzytkownika', id=u.id_uzytkownika) }}" style="display:inline;">
+            <button type="submit" onclick="return confirm('Na pewno usunąć?')">Usuń</button>
+          </form>
+          <a href="{{ url_for('main.uzytkownicy', edit=u.id_uzytkownika) }}">Edytuj</a>
+        </td>
+      </tr>
+      {% endif %}
+    {% endfor %}
+</tbody>
     </table>
     <!-- Modal -->
 <div class="modal fade" id="przedmiotyModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="modalLabel">Przedmioty prowadzonego użytkownika</h5>
+        <h5 class="modal-title" id="modalLabel">Przedmioty wprowadzonego użytkownika</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
