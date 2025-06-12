@@ -4,7 +4,7 @@ import time
 
 from . import main
 from app import db
-from app.models import Budynek, Sala, Rola, Przedmiot, Uzytkownik, Rezerwacja, GrupaCykliczna
+from app.models import Budynek, Sala, Rola, Przedmiot, Uzytkownik, Rezerwacja, GrupaCykliczna, uzytkownicy_przedmioty
 from datetime import datetime, timedelta
 
 @main.route('/', methods=['GET', 'POST'])
@@ -33,8 +33,12 @@ def budynki():
 @main.route('/budynki/usun/<int:id>', methods=['POST'])
 def usun_budynek(id):
     budynek = Budynek.query.get_or_404(id)
-    db.session.delete(budynek)
-    db.session.commit()
+    try:
+        db.session.delete(budynek)
+        db.session.commit()
+    except:
+        db.session.rollback()
+        return f"Błąd: W podanym budynku wystepują sale, usuń je jeśli chcesz usunąć budynek", 500
     return redirect(url_for('main.budynki'))
 
 @main.route('/budynki/edytuj/<int:id>', methods=['POST'])
@@ -79,14 +83,19 @@ def sale():
         wszystkie_sale = Sala.query.filter(Sala.nazwa_sali.ilike(f"%{szukana_nazwa}%")).all()
     else:
         wszystkie_sale = Sala.query.all()
-
-    return render_template('sale.html', sale=wszystkie_sale, err=err)
+    wszystkie_budynki = Budynek.query.all()
+    return render_template('sale.html', sale=wszystkie_sale, budynki=wszystkie_budynki, err=err)
 
 @main.route('/sale/usun/<int:id>', methods=['POST'])
 def usun_sale(id):
     sala = Sala.query.get_or_404(id)
-    db.session.delete(sala)
-    db.session.commit()
+    try:
+        Rezerwacja.query.filter_by(id_sali=id).delete()
+        db.session.delete(sala)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return f"Sala niepoprawny: {e}", 500
     return redirect(url_for('main.sale'))
 
 @main.route('/sale/edytuj/<int:id>', methods=['POST'])
@@ -146,22 +155,21 @@ def przedmioty():
 
     if request.method == 'POST':
         nazwa = request.form.get('nazwa_przedmiotu')
-        id_uzytkownika = request.form.get('id_uzytkownika')
+        # id_uzytkownika = request.form.get('id_uzytkownika')
 
-        if not id_uzytkownika:
-            err = "Musisz wybrać prowadzącego przedmiot."
-        else:
-            try:
-                nowy_przedmiot = Przedmiot(
-                    nazwa_przedmiotu=nazwa,
-                    id_uzytkownika=int(id_uzytkownika)
-                )
-                db.session.add(nowy_przedmiot)
-                db.session.commit()
-                return redirect(url_for('main.przedmioty'))
-            except Exception as e:
-                db.session.rollback()
-                err = f"Wystąpił błąd: {str(e)}"
+        # if not id_uzytkownika:
+        #     err = "Musisz wybrać prowadzącego przedmiot."
+        # else:
+        try:
+            nowy_przedmiot = Przedmiot(
+                nazwa_przedmiotu=nazwa
+            )
+            db.session.add(nowy_przedmiot)
+            db.session.commit()
+            return redirect(url_for('main.przedmioty'))
+        except Exception as e:
+            db.session.rollback()
+            err = f"Wystąpił błąd: {str(e)}"
 
     szukana_nazwa = request.args.get('szukaj')
     if szukana_nazwa:
@@ -175,10 +183,57 @@ def przedmioty():
 
 @main.route('/przedmioty/usun/<int:id>', methods=['POST'])
 def usun_przedmiot(id):
+    try:
+        # Usuń wszystkie powiązania w tabeli pośredniczącej dla danego ID_PRZEDMIOTU
+        stmt = uzytkownicy_przedmioty.delete().where(uzytkownicy_przedmioty.c.ID_PRZEDMIOTU == id)
+        db.session.execute(stmt)
+
+        # Usuń sam przedmiot
+        przedmiot = Przedmiot.query.get_or_404(id)
+        db.session.delete(przedmiot)
+        db.session.commit()
+
+        return redirect(url_for('main.przedmioty'))
+
+    except Exception as e:
+        db.session.rollback()
+        return f"Błąd: {str(e)}", 500
+
+@main.route('/przedmioty/edytuj/<int:id>', methods=['GET', 'POST'])
+def edytuj_przedmiot(id):
     przedmiot = Przedmiot.query.get_or_404(id)
-    db.session.delete(przedmiot)
-    db.session.commit()
-    return redirect(url_for('main.przedmioty'))
+    uzytkownicy = Uzytkownik.query.all()
+
+    if request.method == 'POST':
+        nazwa = request.form.get('nazwa_przedmiotu')
+        prowadzacy_ids = request.form.getlist('prowadzacy_ids')  # pobiera listę ID
+
+        try:
+            # Aktualizuj nazwę
+            przedmiot.nazwa_przedmiotu = nazwa
+
+            # Usuń stare powiązania
+            db.session.execute(
+                uzytkownicy_przedmioty.delete().where(uzytkownicy_przedmioty.c.ID_PRZEDMIOTU == id)
+            )
+
+            # Dodaj nowe
+            for pid in prowadzacy_ids:
+                db.session.execute(
+                    uzytkownicy_przedmioty.insert().values(
+                        ID_UZYTKOWNIKA=int(pid),
+                        ID_PRZEDMIOTU=id
+                    )
+                )
+
+            db.session.commit()
+            return redirect(url_for('main.przedmioty'))
+
+        except Exception as e:
+            db.session.rollback()
+            return f"Błąd przy edycji: {str(e)}", 500
+
+    return render_template('przedmioty.html', przedmioty=Przedmiot.query.all(), uzytkownicy=uzytkownicy)
 
 @main.route('/przedmioty/uzytkownik/<int:uzytkownik_id>')
 def pobierz_przedmioty(uzytkownik_id):
@@ -190,7 +245,7 @@ def pobierz_przedmioty(uzytkownik_id):
     przedmioty = [{
         'id' : p.id_przedmiotu,
         'nazwa' : p.nazwa_przedmiotu
-    } for p in uzytkownik.lista_przedmiotow]
+    } for p in uzytkownik.przedmioty]
     print("Przedmioty:", przedmioty)
     return jsonify(przedmioty)
 
@@ -215,11 +270,61 @@ def uzytkownicy():
 
         db.session.commit()
         return redirect(url_for('main.uzytkownicy'))
-
-    wszyscy = Uzytkownik.query.all()
+    # filtruj jeśli podano nazwę w GET
+    szukana_nazwa = request.args.get('szukaj')
+    if szukana_nazwa:
+        wszyscy = Uzytkownik.query.filter(Uzytkownik.nazwisko.ilike(f"%{szukana_nazwa}%")).all()
+    else:
+        wszyscy = Uzytkownik.query.all()
     wszystkie_role = Rola.query.all()
+    przedmioty = Przedmiot.query.all()
     print("Wszystkie role:", wszystkie_role)  # zobacz w konsoli
-    return render_template('uzytkownicy.html', uzytkownicy=wszyscy, role=wszystkie_role)
+    return render_template('uzytkownicy.html', uzytkownicy=wszyscy, role=wszystkie_role, przedmioty=przedmioty)
+
+@main.route('/uzytkownicy/edytuj/<int:id>', methods=['GET', 'POST'])
+def edytuj_uzytkownika(id):
+    uzytkownik = Uzytkownik.query.get_or_404(id)
+    role = Rola.query.all()
+    przedmioty = Przedmiot.query.all()
+
+    if request.method == 'POST':
+        imie = request.form.get('imie')
+        nazwisko = request.form.get('nazwisko')
+        stopien_naukowy = request.form.get('stopien_naukowy')
+
+        role_ids = request.form.getlist('role_ids')
+        przedmioty_ids = request.form.getlist('przedmioty_ids')  # Pobierz ID przedmiotów
+
+        try:
+            # Aktualizacja podstawowych danych
+            uzytkownik.imie = imie
+            uzytkownik.nazwisko = nazwisko
+            uzytkownik.stopien_naukowy = stopien_naukowy
+
+            # Usuń stare powiązania
+            uzytkownik.role.clear()
+            uzytkownik.przedmioty.clear()
+
+            # Dodaj nowe powiązania - role
+            for rid in role_ids:
+                rola = Rola.query.get(rid)
+                if rola:
+                    uzytkownik.role.append(rola)
+
+            # Dodaj nowe powiązania - przedmioty
+            for pid in przedmioty_ids:
+                przedmiot = Przedmiot.query.get(pid)
+                if przedmiot:
+                    uzytkownik.przedmioty.append(przedmiot)
+
+            db.session.commit()
+            return redirect(url_for('main.uzytkownicy'))
+
+        except Exception as e:
+            db.session.rollback()
+            return f"Błąd: {str(e)}", 500
+
+    return render_template('uzytkownicy.html', uzytkownicy=Uzytkownik.query.all(), role=role, przedmioty=przedmioty)
 
 @main.route('/uzytkownicy/usun/<int:id>', methods=['POST'])
 def usun_uzytkownika(id):
