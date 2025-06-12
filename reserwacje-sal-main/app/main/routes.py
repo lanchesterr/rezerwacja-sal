@@ -375,8 +375,13 @@ def rezerwacje():
         except Exception as e:
             db.session.rollback()
             return f"Błąd: {e}", 400
+    # filtruj jeśli podano nazwę w GET
+    szukana_nazwa = request.args.get('szukaj')
+    if szukana_nazwa:
+        rezerwacje = Rezerwacja.query.filter(Sala.nazwa_sali.ilike(f"%{szukana_nazwa}%")).all()
+    else:
+        rezerwacje = Rezerwacja.query.all()
 
-    rezerwacje = Rezerwacja.query.all()
     sale = Sala.query.all()
     przedmioty = Przedmiot.query.all()
     uzytkownicy = Uzytkownik.query.all()
@@ -390,6 +395,37 @@ def usun_rezerwacje(id):
     db.session.commit()
     return redirect(url_for('main.rezerwacje'))
 
+@main.route('/rezerwacje/edytuj/<int:id>', methods=['GET', 'POST'])
+def edytuj_rezerwacje(id):
+    rezerwacja = Rezerwacja.query.get_or_404(id)
+    sale = Sala.query.all()
+    przedmioty = Przedmiot.query.all()
+    uzytkownicy = Uzytkownik.query.all()
+
+    if request.method == 'POST':
+        try:
+            # Zaktualizuj dane z formularza
+            rezerwacja.status = request.form['status']
+            rezerwacja.id_sali = int(request.form['id_sali'])
+            rezerwacja.id_przedmiotu = int(request.form['id_przedmiotu'])
+            rezerwacja.id_uzytkownika = int(request.form['id_uzytkownika'])
+            rezerwacja.czas_od = datetime.strptime(request.form['czas_od'], '%Y-%m-%dT%H:%M')
+            rezerwacja.czas_do = datetime.strptime(request.form['czas_do'], '%Y-%m-%dT%H:%M')
+
+            db.session.commit()
+            return redirect(url_for('main.rezerwacje'))
+
+        except Exception as e:
+            db.session.rollback()
+            return f"Błąd: {str(e)}", 500
+
+    return render_template(
+        'rezerwacje.html',
+        rezerwacje=Rezerwacja.query.all(),
+        sale=sale,
+        przedmioty=przedmioty,
+        uzytkownicy=uzytkownicy
+    )
 @main.route('/grupy_cykliczne', methods=['GET', 'POST'])
 def grupy_cykliczne():
     if request.method == 'POST':
@@ -447,7 +483,8 @@ def grupy_cykliczne():
     sale = Sala.query.all()
     przedmioty = Przedmiot.query.all()
     uzytkownicy = Uzytkownik.query.all()
-    return render_template('grupy_cykliczne.html', grupy=grupy, sale=sale, przedmioty=przedmioty, uzytkownicy=uzytkownicy)
+    return render_template('grupy_cykliczne.html', grupy=grupy,
+                           sale=sale, przedmioty=przedmioty, uzytkownicy=uzytkownicy)
 
 @main.route('/grupy_cykliczne/usun/<int:id>', methods=['POST'])
 def usun_grupe_cykliczna(id):
@@ -456,3 +493,4 @@ def usun_grupe_cykliczna(id):
     db.session.delete(grupa)
     db.session.commit()
     return redirect(url_for('main.grupy_cykliczne'))
+

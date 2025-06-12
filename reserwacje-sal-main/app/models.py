@@ -125,5 +125,5 @@ class GrupaCykliczna(db.Model):
     godzina_do = db.Column('GODZINA_DO', db.String(5), nullable=False)
     opis = db.Column(db.String(255))
 
-    # rezerwacje = db.relationship('Rezerwacja', backref='GRUPYCYKLICZNE', cascade="all, delete")
+    rezerwacje = db.relationship('Rezerwacja', backref='GRUPYCYKLICZNE', cascade="all, delete")
 

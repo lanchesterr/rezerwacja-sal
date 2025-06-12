@@ -7,7 +7,10 @@
 </head>
 <body>
     <h1>Lista pojedynczych rezerwacji</h1>
-
+    <form method="GET" action="{{ url_for("main.rezerwacje") }}">
+    <input type="text" name="szukaj" placeholder="Wpisz nazwę sali..." value="{{ request.args.get('szukaj', '') }}">
+        <button type="submit">Szukaj</button>
+    </form>
     <table>
         <thead>
             <tr>
@@ -23,21 +26,72 @@
         </thead>
         <tbody>
             {% for r in rezerwacje %}
-            <tr>
-                <td>{{ r.id_rezerwacji }}</td>
-                <td>{{ r.sala.nazwa_sali }}</td>
-                <td>{{ r.przedmiot.nazwa_przedmiotu }}</td>
-                <td>{{ r.uzytkownik.imie }} {{ r.uzytkownik.nazwisko }}</td>
-                <td>{{ r.status }}</td>
-                <td>{{ r.czas_od }}</td>
-                <td>{{ r.czas_do }}</td>
-                <td>
-                    <form action="{{ url_for('main.usun_rezerwacje', id=r.id_rezerwacji) }}" method="POST">
-                        <button type="submit" onclick="return confirm('Usunąć rezerwację?')">Usuń</button>
-                    </form>
-                </td>
-            </tr>
+  {% if request.args.get('edit') == r.id_rezerwacji|string %}
+    <tr>
+      <form method="POST" action="{{ url_for('main.edytuj_rezerwacje', id=r.id_rezerwacji) }}">
+        <td>{{ r.id_rezerwacji }}</td>
+
+        <td>
+          <select name="id_sali">
+            {% for sala in sale %}
+              <option value="{{ sala.id_sali }}" {% if sala.id_sali == r.id_sali %}selected{% endif %}>
+                {{ sala.nazwa_sali }}
+              </option>
             {% endfor %}
+          </select>
+        </td>
+
+        <td>
+          <select name="id_przedmiotu">
+            {% for p in przedmioty %}
+              <option value="{{ p.id_przedmiotu }}" {% if p.id_przedmiotu == r.id_przedmiotu %}selected{% endif %}>
+                {{ p.nazwa_przedmiotu }}
+              </option>
+            {% endfor %}
+          </select>
+        </td>
+
+        <td>
+          <select name="id_uzytkownika">
+            {% for u in uzytkownicy %}
+              <option value="{{ u.id_uzytkownika }}" {% if u.id_uzytkownika == r.id_uzytkownika %}selected{% endif %}>
+                {{ u.imie }} {{ u.nazwisko }}
+              </option>
+            {% endfor %}
+          </select>
+        </td>
+
+        <td>
+          <input type="text" name="status" value="{{ r.status }}" required>
+        </td>
+
+        <td><input type="datetime-local" name="czas_od" value="{{ r.czas_od.strftime('%Y-%m-%dT%H:%M') }}"></td>
+        <td><input type="datetime-local" name="czas_do" value="{{ r.czas_do.strftime('%Y-%m-%dT%H:%M') }}"></td>
+
+        <td>
+          <button type="submit">Zapisz</button>
+          <a href="{{ url_for('main.rezerwacje') }}">Anuluj</a>
+        </td>
+      </form>
+    </tr>
+  {% else %}
+    <tr>
+      <td>{{ r.id_rezerwacji }}</td>
+      <td>{{ r.sala.nazwa_sali }}</td>
+      <td>{{ r.przedmiot.nazwa_przedmiotu }}</td>
+      <td>{{ r.uzytkownik.imie }} {{ r.uzytkownik.nazwisko }}</td>
+      <td>{{ r.status }}</td>
+      <td>{{ r.czas_od }}</td>
+      <td>{{ r.czas_do }}</td>
+      <td>
+        <form action="{{ url_for('main.usun_rezerwacje', id=r.id_rezerwacji) }}" method="POST">
+          <button type="submit" onclick="return confirm('Usunąć rezerwację?')">Usuń</button>
+        </form>
+        <a href="{{ url_for('main.rezerwacje', edit=r.id_rezerwacji) }}">Edytuj</a>
+      </td>
+    </tr>
+  {% endif %}
+{% endfor %}
         </tbody>
     </table>
 
