@@ -1,5 +1,6 @@
 from app import db
 
+
 class Budynek(db.Model):
     __tablename__ = 'BUDYNKI'
 
@@ -26,7 +27,7 @@ class Sala(db.Model):
     def __repr__(self):
         return f"<Sala {self.nazwa_sali}>"
 
-# Tabela pośrednicząca dla relacji wiele-do-wielu
+# Tabela pośrednicząca dla relacji wiele-do-wielu ROLE_UZYTKOWNICY
 role_uzytkownicy = db.Table(
     'ROLE_UZYTKOWNICY',
     db.Column('ID_UZYTKOWNIKA', db.Integer, db.ForeignKey('UZYTKOWNICY.ID_UZYTKOWNIKA'), primary_key=True),
@@ -44,14 +45,23 @@ class Rola(db.Model):
         return f"<Rola {self.nazwa_roli}>"
 
 
+# Tabela pośrednicząca dla relacji wiele-do-wielu - UZYTKOWNICY_PRZEDMIOTY
+uzytkownicy_przedmioty = db.Table(
+    'UZYTKOWNICY_PRZEDMIOTY',
+    db.Column('ID_UZYTKOWNIKA', db.Integer, db.ForeignKey('UZYTKOWNICY.ID_UZYTKOWNIKA'), primary_key=True),
+    db.Column('ID_PRZEDMIOTU', db.Integer, db.ForeignKey('PRZEDMIOTY.ID_PRZEDMIOTU'), primary_key=True),
+    db.Model.metadata
+)
+
 class Przedmiot(db.Model):
     __tablename__ = 'PRZEDMIOTY'
 
     id_przedmiotu = db.Column("ID_PRZEDMIOTU", db.Integer, primary_key=True)
     nazwa_przedmiotu = db.Column("NAZWA_PRZEDMIOTU", db.String(50), nullable=False)
-    id_uzytkownika = db.Column("ID_UZYTKOWNIKA", db.Integer, db.ForeignKey('UZYTKOWNICY.ID_UZYTKOWNIKA'), nullable=False)
-    uzytkownik = db.relationship('Uzytkownik', backref='przedmioty')
 
+
+    # Relacja wiele-do-wielu z Uzytkownikiem
+    prowadzacy = db.relationship("Uzytkownik", secondary=uzytkownicy_przedmioty, backref="lista_przedmiotow")
     def __repr__(self):
         return f"<Przedmiot {self.nazwa_przedmiotu}>"
 

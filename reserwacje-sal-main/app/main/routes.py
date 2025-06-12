@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for, flash
+from flask import render_template, request, redirect, url_for, flash, jsonify
 from sqlalchemy import select
 import time
 
@@ -180,8 +180,19 @@ def usun_przedmiot(id):
     db.session.commit()
     return redirect(url_for('main.przedmioty'))
 
+@main.route('/przedmioty/uzytkownik/<int:uzytkownik_id>')
+def pobierz_przedmioty(uzytkownik_id):
+    uzytkownik = Uzytkownik.query.get(uzytkownik_id)
 
+    if not uzytkownik:
+        return jsonify({"error": "Użytkownik nie znaleziony"}), 404
 
+    przedmioty = [{
+        'id' : p.id_przedmiotu,
+        'nazwa' : p.nazwa_przedmiotu
+    } for p in uzytkownik.lista_przedmiotow]
+    print("Przedmioty:", przedmioty)
+    return jsonify(przedmioty)
 
 @main.route('/uzytkownicy', methods=['GET', 'POST'])
 def uzytkownicy():
@@ -216,6 +227,7 @@ def usun_uzytkownika(id):
     db.session.delete(uzytkownik)
     db.session.commit()
     return redirect(url_for('main.uzytkownicy'))
+
 
 @main.route('/rezerwacje', methods=['GET', 'POST'])
 def rezerwacje():
